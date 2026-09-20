@@ -75,7 +75,7 @@ Phases 1–6 below supply much of the research this requires: the standards
 tables, design rules and published lessons exist so that values come from a
 source rather than from guesswork.
 
-Base URL: `SW_KB_HOST` plugin config (default: `https://sw-plugin.ideep.org`)
+Base URL: `${user_config.SW_KB_HOST}` — the value of the `SW_KB_HOST` plugin config, which falls back to the public server when unset.
 All endpoints are public — no auth header needed.
 
 **IMPORTANT — use `curl` via the Bash tool for every request. Never use Fetch
@@ -83,7 +83,7 @@ or WebFetch — they route through Anthropic's cloud and cannot reach private
 network addresses. Always quote the URL in double quotes — unquoted `?` and
 `&` are shell glob/control characters in zsh and will fail.**
 
-Example: `curl -s "https://sw-plugin.ideep.org/api/knowledge?kind=convention"`
+Example: `curl -s "${user_config.SW_KB_HOST}/api/knowledge?kind=convention"`
 
 ---
 
@@ -93,7 +93,7 @@ Conventions are project-wide rules that apply to every design, every session.
 Load them once per conversation and hold them in context as active constraints.
 
 ```
-GET {SW_KB_HOST}/api/knowledge?kind=convention
+GET ${user_config.SW_KB_HOST}/api/knowledge?kind=convention
 ```
 
 This returns ~5 documents covering:
@@ -118,7 +118,7 @@ Design rules are enforceable constraints with automated checking.
 Load them all once and keep them active throughout the session.
 
 ```
-GET {SW_KB_HOST}/api/design-rules
+GET ${user_config.SW_KB_HOST}/api/design-rules
 ```
 
 Response: array of `DesignRule`
@@ -162,7 +162,7 @@ Search the knowledge base for documents relevant to what the user wants to build
 This fetches reference guides, playbooks, and strategies specific to the task.
 
 ```
-GET {SW_KB_HOST}/api/knowledge/search?q={task_description}
+GET ${user_config.SW_KB_HOST}/api/knowledge/search?q={task_description}
 ```
 
 Where `{task_description}` is a concise description of what you're about to do.
@@ -196,7 +196,7 @@ Response: array of `KnowledgeDocument`, ordered by relevance.
 
 **If you need a specific document by slug:**
 ```
-GET {SW_KB_HOST}/api/knowledge/{slug}
+GET ${user_config.SW_KB_HOST}/api/knowledge/{slug}
 ```
 
 **Do not skip reference documents about the SW API method you are about to use.**
@@ -234,7 +234,7 @@ the checker uses `additionalProperties: true`.
 ### 4b — POST the context
 
 ```
-POST {SW_KB_HOST}/api/check-context
+POST ${user_config.SW_KB_HOST}/api/check-context
 Content-Type: application/json
 
 { ...context dict... }
@@ -291,7 +291,7 @@ Do not load all tables at once — query specific tables as needed.
 ### Available tables
 
 ```
-GET {SW_KB_HOST}/api/standards
+GET ${user_config.SW_KB_HOST}/api/standards
 → { "tables": { "fits": 16, "tolerances_iso2768": 30, "clearance_holes": 11,
                 "materials": 10, "fasteners": 13, "sheet_metal_gauges": 19,
                 "preferred_numbers": 38, "surface_finish": 9,
@@ -302,15 +302,15 @@ GET {SW_KB_HOST}/api/standards
 
 **Specifying material properties** (density, yield, modulus):
 ```
-GET {SW_KB_HOST}/api/standards/materials
-GET {SW_KB_HOST}/api/standards/materials/{material_name}
+GET ${user_config.SW_KB_HOST}/api/standards/materials
+GET ${user_config.SW_KB_HOST}/api/standards/materials/{material_name}
 ```
 Query when: user specifies a material, or before applying material in SolidWorks.
 Use: get exact `density_g_cm3` for mass verification, `yield_mpa` for stress checks.
 
 **Specifying a fit (shaft/hole tolerance)**:
 ```
-GET {SW_KB_HOST}/api/standards/fits
+GET ${user_config.SW_KB_HOST}/api/standards/fits
 ```
 Filter the returned rows by `hole_basis`, `shaft_basis`, and `size_min_mm`/`size_max_mm`.
 Use: get exact `hole_upper_um`/`hole_lower_um` deviations in micrometres.
@@ -318,41 +318,41 @@ Example: H7/g6 fit at Ø12mm → query fits, filter by hole_basis=H7, shaft_basi
 
 **Hole size for a bolt (clearance hole)**:
 ```
-GET {SW_KB_HOST}/api/standards/clearance_holes
-GET {SW_KB_HOST}/api/standards/clearance_holes/{designation}
+GET ${user_config.SW_KB_HOST}/api/standards/clearance_holes
+GET ${user_config.SW_KB_HOST}/api/standards/clearance_holes/{designation}
 ```
 Query when: adding a bolt hole. Key: `designation` = "M8", "M10", etc.
 Returns: `close_mm`, `normal_mm`, `loose_mm` diameters (use `normal_mm` by default per HOLE-001).
 
 **General tolerance for a dimension**:
 ```
-GET {SW_KB_HOST}/api/standards/tolerances_iso2768
+GET ${user_config.SW_KB_HOST}/api/standards/tolerances_iso2768
 ```
 Filter by `tol_class` (f/m/c/v) and `range_min_mm`/`range_max_mm`.
 Use: get `tol_mm` (symmetric ±) for a given nominal dimension under the project's tolerance class.
 
 **Fastener geometry**:
 ```
-GET {SW_KB_HOST}/api/standards/fasteners
-GET {SW_KB_HOST}/api/standards/fasteners/{designation}
+GET ${user_config.SW_KB_HOST}/api/standards/fasteners
+GET ${user_config.SW_KB_HOST}/api/standards/fasteners/{designation}
 ```
 Returns: `pitch_coarse_mm`, `head_width_mm`, `head_height_mm`, `strength_class`.
 
 **Sheet metal gauge → thickness**:
 ```
-GET {SW_KB_HOST}/api/standards/sheet_metal_gauges
+GET ${user_config.SW_KB_HOST}/api/standards/sheet_metal_gauges
 ```
 Filter by `gauge` and `material` (steel/aluminum/stainless).
 
 **Preferred number check (R5/R10/R20)**:
 ```
-GET {SW_KB_HOST}/api/standards/preferred_numbers
+GET ${user_config.SW_KB_HOST}/api/standards/preferred_numbers
 ```
 Use: verify nominal dimension is on the R20 series per DFM-002.
 
 **Specific row lookup**:
 ```
-GET {SW_KB_HOST}/api/standards/{table}/{key}
+GET ${user_config.SW_KB_HOST}/api/standards/{table}/{key}
 ```
 Use when you know the exact identifier (e.g. material name, fastener designation).
 
@@ -364,7 +364,7 @@ After completing the geometry (before exporting/saving as done), run check-conte
 again with the FINAL design parameters.
 
 ```
-POST {SW_KB_HOST}/api/check-context
+POST ${user_config.SW_KB_HOST}/api/check-context
 { final design context — more complete than Phase 4 }
 ```
 

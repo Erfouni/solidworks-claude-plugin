@@ -45,7 +45,7 @@ If no SolidWorks work happened → return `{ "skip": true }`.
 
 ### Step 2 — Look up the part
 ```bash
-curl -s "https://sw-plugin.ideep.org/api/parts?q={part_name}"
+curl -s "${user_config.SW_KB_HOST}/api/parts?q={part_name}"
 ```
 Save returned `id` as `partId` (null if not found).
 

@@ -20,7 +20,7 @@ writing a single line of code or opening SolidWorks.
 The knowledge base contains published instructions, macros, known errors, and
 lessons from real past sessions. Always use what exists before inventing.
 
-Base URL: `SW_KB_HOST` plugin config (default: `https://sw-plugin.ideep.org`)
+Base URL: `${user_config.SW_KB_HOST}` — the value of the `SW_KB_HOST` plugin config, which falls back to the public server when unset.
 All endpoints are **public — no auth header needed**.
 
 **IMPORTANT — use `curl` via the Bash tool for every request. Never use Fetch
@@ -39,7 +39,7 @@ Follow these steps in order every time. Do not skip steps.
 ### Step 1 — Confirm the server is reachable
 
 ```
-GET {SW_KB_HOST}/health
+GET ${user_config.SW_KB_HOST}/health
 ```
 
 Expected: `{ "status": "ok" }`
@@ -53,7 +53,7 @@ Expected: `{ "status": "ok" }`
 ### Step 2 — Load all categories
 
 ```
-GET {SW_KB_HOST}/api/categories
+GET ${user_config.SW_KB_HOST}/api/categories
 ```
 
 Response: flat array of categories
@@ -76,12 +76,12 @@ Match by `name` or `slug` — fuzzy match is fine (e.g. "shaft" → "Shaft").
 ### Step 3 — List parts in that category
 
 ```
-GET {SW_KB_HOST}/api/parts?categoryId={categoryId}&pageSize=100
+GET ${user_config.SW_KB_HOST}/api/parts?categoryId={categoryId}&pageSize=100
 ```
 
 Optional — also filter by tags or search term to narrow results:
 ```
-GET {SW_KB_HOST}/api/parts?categoryId={categoryId}&q={part_number}&pageSize=100
+GET ${user_config.SW_KB_HOST}/api/parts?categoryId={categoryId}&q={part_number}&pageSize=100
 ```
 
 Response: `PartListResponse`
@@ -117,16 +117,16 @@ Match by `partNumber` (exact or close match) or `name`.
 
 If you have a `partId` from Step 3:
 ```
-GET {SW_KB_HOST}/api/parts/{partId}
+GET ${user_config.SW_KB_HOST}/api/parts/{partId}
 ```
 
 If you don't have a `partId` yet (no category match or no part match in Step 3):
 ```
-GET {SW_KB_HOST}/api/parts?q={part_number_or_name}&pageSize=20
+GET ${user_config.SW_KB_HOST}/api/parts?q={part_number_or_name}&pageSize=20
 ```
 Take the best match from the results (if any), then:
 ```
-GET {SW_KB_HOST}/api/parts/{partId}
+GET ${user_config.SW_KB_HOST}/api/parts/{partId}
 ```
 
 Response: `PartDetail` — the part plus ALL its linked published knowledge:
@@ -223,8 +223,8 @@ Do this regardless of whether the specific part was found.
 These apply to ALL SolidWorks work.
 
 ```
-GET {SW_KB_HOST}/api/errors
-GET {SW_KB_HOST}/api/lessons
+GET ${user_config.SW_KB_HOST}/api/errors
+GET ${user_config.SW_KB_HOST}/api/lessons
 ```
 
 Scan the results. Before calling any SolidWorks API method, check `api/errors`

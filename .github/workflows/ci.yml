@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Check hook syntax
+        run: bash -n hooks/session-start
+      - name: Validate JSON manifests
+        run: |
+          for f in .claude-plugin/plugin.json .claude-plugin/marketplace.json hooks/hooks.json docs/openapi.json; do
+            python3 -m json.tool "$f" > /dev/null
+            echo "ok: $f"
+          done
+      - name: SessionStart hook honours SW_KB_HOST
+        run: bash tests/test-session-start-host.sh

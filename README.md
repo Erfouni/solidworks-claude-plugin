@@ -36,7 +36,9 @@ If you host the knowledge base yourself, set the base URL in the plugin's config
 |---|---|
 | `SW_KB_HOST` | `https://sw-plugin.ideep.org` |
 
-Every skill reads that one value, so changing it redirects all knowledge lookups and feedback submissions.
+Every skill, agent, and the SessionStart hook read that one value, so changing it redirects all
+knowledge lookups and feedback submissions to your server. Verify it with
+`bash tests/test-session-start-host.sh`, which fails if anything falls back to the public host.
 
 ### Step 4 — Verify
 
