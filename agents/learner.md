@@ -46,7 +46,7 @@ Extract the part identifier from the conversation
 Then look up whether this part already exists in the catalog:
 
 ```
-GET {SW_KB_HOST}/api/parts?q={part_identifier}
+GET ${user_config.SW_KB_HOST}/api/parts?q={part_identifier}
 ```
 
 - If a match is found: save the returned `id` as `partId`.

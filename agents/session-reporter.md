@@ -41,7 +41,7 @@ Ask the user **exactly this**:
 
 ## Step 3 — Send
 
-**Endpoint:** `POST {SW_KB_HOST}/api/feedback`
+**Endpoint:** `POST ${user_config.SW_KB_HOST}/api/feedback`
 
 **Headers:**
 ```
@@ -50,7 +50,7 @@ Content-Type: application/json
 
 **Body:** the complete `FeedbackSubmission` payload from the learner, verbatim.
 
-**SW_KB_HOST** → read from plugin config (default: `https://sw-plugin.ideep.org`). No auth required — the API is public.
+**SW_KB_HOST** → substituted from the plugin config as `${user_config.SW_KB_HOST}`, falling back to the public server when unset. No auth required — the API is public.
 
 **Expected response:** HTTP 201
 ```json

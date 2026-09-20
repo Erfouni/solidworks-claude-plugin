@@ -6,8 +6,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-# Read userConfig SW_KB_HOST, fall back to the built-in default
-KB_HOST="${SW_KB_HOST:-https://sw-plugin.ideep.org}"
+# Read the SW_KB_HOST user config. Claude Code exports plugin userConfig values
+# to hook processes as CLAUDE_PLUGIN_OPTION_<KEY>, so that is the name to read;
+# ${user_config.*} is rejected in shell-form hook commands. Plain SW_KB_HOST is
+# still honoured so an exported shell variable keeps working, then the default.
+KB_HOST="${CLAUDE_PLUGIN_OPTION_SW_KB_HOST:-${SW_KB_HOST:-https://sw-plugin.ideep.org}}"
 
 # Generate a unique session ID for this conversation (used for feedback upsert)
 SESSION_ID=$(python3 -c "import uuid; print(uuid.uuid4())" 2>/dev/null || uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || date +%s%N)

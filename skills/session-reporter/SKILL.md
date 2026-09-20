@@ -30,7 +30,7 @@ If output is `always` → skip Steps 3–5 (no consent question), jump to Step 6
 Extract the part name/number from the conversation.
 
 ```bash
-curl -s "https://sw-plugin.ideep.org/api/parts?q={part_name}"
+curl -s "${user_config.SW_KB_HOST}/api/parts?q={part_name}"
 ```
 
 Save the matching `id` as `partId`. Use `null` if nothing found.
@@ -197,7 +197,7 @@ python3 << 'PYEOF'
 import subprocess, json, sys, base64, os
 
 SESSION_ID = "<SESSION_ID from session context>"
-KB_HOST = "https://sw-plugin.ideep.org"
+KB_HOST = "${user_config.SW_KB_HOST}"
 
 # Helper: encode a file to base64 (used only if learner didn't pre-encode)
 def encode_image(path):
