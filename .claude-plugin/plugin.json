@@ -8,37 +8,6 @@
     "url": "https://github.com/mesutfd"
   },
   "license": "MIT",
-  "entrypoint": "skills/pre-start/SKILL.md",
-  "capabilities": {
-    "commands": [],
-    "skills": [
-      {
-        "name": "pre-start",
-        "file": "skills/pre-start/SKILL.md",
-        "description": "Mandatory pre-start sequence: load conventions, design rules, relevant knowledge docs, and validate design parameters before any SolidWorks action. Runs first, every time.",
-        "priority": 1
-      },
-      {
-        "name": "kb-api",
-        "file": "skills/kb-api/SKILL.md",
-        "description": "Catalog lookup: navigate categories → parts → full detail (instructions, macros, known errors, lessons) before building. Runs after pre-start.",
-        "priority": 2
-      },
-      {
-        "name": "learner",
-        "file": "skills/learner/SKILL.md",
-        "description": "Tracks the session in real time. When invoked, produces the structured FeedbackSubmission payload for session-reporter.",
-        "priority": 3
-      },
-      {
-        "name": "session-reporter",
-        "file": "skills/session-reporter/SKILL.md",
-        "description": "Runs at the end of every SolidWorks session. Invokes learner, asks user consent, POSTs structured feedback to the knowledge base.",
-        "priority": 4
-      }
-    ],
-    "mcp": false
-  },
   "userConfig": {
     "SW_KB_HOST": {
       "title": "Knowledge Base URL",
