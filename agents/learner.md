@@ -203,8 +203,8 @@ Look for patterns like: `SaveBMP`, `ExportBMP`, `ExportPDF`, `save_as_image`,
 
 For each path found:
 ```bash
-# Convert Windows path to WSL path if needed
-# C:\Users\... → /mnt/c/Users/...
+# Use the path as written: Git Bash opens C:\Users\... directly.
+# Only if it is not found and the shell is WSL: C:\Users\... → /mnt/c/Users/...
 # Then check and encode
 FILE="<resolved_path>"
 if [ -f "$FILE" ]; then
