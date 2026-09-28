@@ -194,23 +194,28 @@ array. For each entry:
 
 ```bash
 python3 << 'PYEOF'
-import subprocess, json, sys, base64, os
+import subprocess, json, sys, base64, os, tempfile
 
 SESSION_ID = "<SESSION_ID from session context>"
 KB_HOST = "${user_config.SW_KB_HOST}"
 
 # Helper: encode a file to base64 (used only if learner didn't pre-encode)
 def encode_image(path):
-    wsl_path = path.replace("\\", "/")
-    if wsl_path[1:3] == ":/":  # Windows drive letter
-        wsl_path = "/mnt/" + wsl_path[0].lower() + wsl_path[2:]
-    try:
-        if os.path.getsize(wsl_path) > 10 * 1024 * 1024:
-            return None  # skip files > 10 MB
-        with open(wsl_path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    except Exception:
-        return None
+    # Native Windows Python (Claude Code on Windows) opens C:\... as given.
+    # Only under WSL does a drive path need rewriting to /mnt/c/...
+    candidates = [path]
+    p = path.replace("\\", "/")
+    if p[1:3] == ":/":  # Windows drive letter
+        candidates.append("/mnt/" + p[0].lower() + p[2:])
+    for candidate in candidates:
+        try:
+            if os.path.getsize(candidate) > 10 * 1024 * 1024:
+                return None  # skip files > 10 MB
+            with open(candidate, "rb") as f:
+                return base64.b64encode(f.read()).decode()
+        except OSError:
+            continue
+    return None
 
 EXT_TO_MIME = {
     ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
@@ -307,28 +312,40 @@ for key in ["suggestedCategory", "suggestedPartName", "suggestedPartNumber"]:
     if not v or (isinstance(v, str) and v.startswith("<")):
         payload.pop(key, None)
 
-body = json.dumps(payload)
+# curl reads the body from a file. Passed with -d on the command line, a
+# payload with a screenshot or a long macro exceeds the OS limit (32,767
+# characters on Windows, 128 KiB per argument on Linux) and curl never starts.
+with tempfile.NamedTemporaryFile("wb", suffix=".json", delete=False) as f:
+    f.write(json.dumps(payload).encode("utf-8"))
+    body_file = f.name
 
-for attempt in range(3):
-    result = subprocess.run(
-        ["curl", "-s", "-w", "\n%{http_code}", "-X", "POST",
-         f"{KB_HOST}/api/feedback",
-         "-H", "Content-Type: application/json",
-         "-d", body],
-        capture_output=True, text=True
-    )
-    output = result.stdout.strip().split("\n")
-    http_code = output[-1] if output else "0"
-    body_out = "\n".join(output[:-1])
-    
-    if http_code.startswith("2"):
-        print(f"Feedback submitted. ID: {json.loads(body_out).get('id', '?')}")
-        break
-    elif http_code.startswith("4"):
-        print(f"Feedback rejected ({http_code}): {body_out}")
-        break
-    else:
-        print(f"Attempt {attempt+1} failed ({http_code}). Retrying...")
+try:
+    for attempt in range(3):
+        try:
+            result = subprocess.run(
+                ["curl", "-s", "-w", "\n%{http_code}", "-X", "POST",
+                 f"{KB_HOST}/api/feedback",
+                 "-H", "Content-Type: application/json",
+                 "--data-binary", "@" + body_file],
+                capture_output=True
+            )
+        except OSError as e:
+            print(f"Could not run curl: {e}")
+            break
+        output = result.stdout.decode("utf-8", "replace").strip().split("\n")
+        http_code = output[-1] if output else "0"
+        body_out = "\n".join(output[:-1])
+
+        if http_code.startswith("2"):
+            print(f"Feedback submitted. ID: {json.loads(body_out).get('id', '?')}")
+            break
+        elif http_code.startswith("4"):
+            print(f"Feedback rejected ({http_code}): {body_out}")
+            break
+        else:
+            print(f"Attempt {attempt+1} failed ({http_code}). Retrying...")
+finally:
+    os.unlink(body_file)
 
 PYEOF
 ```

@@ -22,3 +22,5 @@ jobs:
           done
       - name: SessionStart hook honours SW_KB_HOST
         run: bash tests/test-session-start-host.sh
+      - name: Session reporter POSTs large and non-ASCII payloads
+        run: python3 tests/test_session_reporter_post.py

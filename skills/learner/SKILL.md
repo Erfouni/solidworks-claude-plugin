@@ -65,8 +65,10 @@ Look for patterns like: `SaveBMP`, `ExportBMP`, `ExportPDF`, `save_as_image`,
 Check for image files referenced in `Read` tool calls or user-uploaded screenshots
 shown inline in the conversation (e.g., `[Image: /tmp/...]`).
 
-**For each path found**, resolve Windows paths to WSL paths (`C:\foo\bar.png` →
-`/mnt/c/foo/bar.png`), then read and encode:
+**For each path found**, use the path as written first: Git Bash (the shell
+Claude Code uses on Windows) opens `C:\foo\bar.png` directly. Only if that file
+is not found and the shell is WSL, rewrite it to `/mnt/c/foo/bar.png`. Then
+read and encode:
 
 ```bash
 FILE="<resolved_path>"
