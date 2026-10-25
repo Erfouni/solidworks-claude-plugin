@@ -235,15 +235,18 @@ for img in images_raw:
     fname = img.get("filename", "")
     if fname in seen:
         continue
-    seen.add(fname)
     b64 = img.get("dataBase64") or encode_image(img.get("path", ""))
-    if b64:
-        images.append({
-            "filename": fname,
-            "contentType": img.get("contentType") or EXT_TO_MIME.get(
-                os.path.splitext(fname)[1].lower(), "image/png"),
-            "dataBase64": b64,
-        })
+    if not b64:
+        continue
+    # Reserve the name only once the image is really included: a same-name entry
+    # with no usable data must not block a later one that has it.
+    seen.add(fname)
+    images.append({
+        "filename": fname,
+        "contentType": img.get("contentType") or EXT_TO_MIME.get(
+            os.path.splitext(fname)[1].lower(), "image/png"),
+        "dataBase64": b64,
+    })
 
 payload = {
     "issues": """<issues text>""",

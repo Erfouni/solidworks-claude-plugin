@@ -143,6 +143,34 @@ class SessionReporterPost(unittest.TestCase):
         self.assertIn("images", payload, "image was dropped")
         self.assertEqual(base64.b64decode(payload["images"][0]["dataBase64"]), png)
 
+    def test_a_missing_first_entry_does_not_block_a_later_usable_one(self):
+        # A view.png that cannot be read must not reserve the name for the usable
+        # view.png that follows it (#6).
+        png = b"\x89PNG\r\n\x1a\n" + b"y" * 16
+        missing = {"filename": "view.png",
+                   "path": os.path.join(self.tmp.name, "missing-fixture.png")}
+        usable = {"filename": "view.png", "contentType": "image/png",
+                  "dataBase64": base64.b64encode(png).decode()}
+        payload = self.received_payload(self.run_script([missing, usable]))
+        self.assertEqual(len(payload.get("images", [])), 1, payload)
+        self.assertEqual(base64.b64decode(payload["images"][0]["dataBase64"]), png)
+
+    def test_a_same_name_entry_that_cannot_be_read_is_skipped(self):
+        # A directory is not readable as an image, so encode_image() gives no data.
+        unreadable = {"filename": "view.png", "path": self.tmp.name}
+        usable = {"filename": "view.png", "contentType": "image/png",
+                  "dataBase64": "Zml4dHVyZQ=="}
+        payload = self.received_payload(self.run_script([unreadable, usable]))
+        self.assertEqual(len(payload.get("images", [])), 1, payload)
+        self.assertEqual(payload["images"][0]["dataBase64"], "Zml4dHVyZQ==")
+
+    def test_two_usable_entries_with_the_same_name_keep_the_first(self):
+        first = {"filename": "view.png", "contentType": "image/png", "dataBase64": "Zmlyc3Q="}
+        second = {"filename": "view.png", "contentType": "image/png", "dataBase64": "c2Vjb25k"}
+        payload = self.received_payload(self.run_script([first, second]))
+        self.assertEqual(len(payload.get("images", [])), 1, payload)
+        self.assertEqual(payload["images"][0]["dataBase64"], "Zmlyc3Q=")
+
     def test_a_rejected_submission_exits_nonzero(self):
         server = HTTPServer(("127.0.0.1", 0), _RejectHandler)
         host = "http://127.0.0.1:%d" % server.server_address[1]
