@@ -319,6 +319,7 @@ with tempfile.NamedTemporaryFile("wb", suffix=".json", delete=False) as f:
     f.write(json.dumps(payload).encode("utf-8"))
     body_file = f.name
 
+submitted = False
 try:
     for attempt in range(3):
         try:
@@ -338,14 +339,23 @@ try:
 
         if http_code.startswith("2"):
             print(f"Feedback submitted. ID: {json.loads(body_out).get('id', '?')}")
+            submitted = True
             break
         elif http_code.startswith("4"):
             print(f"Feedback rejected ({http_code}): {body_out}")
             break
-        else:
+        elif attempt < 2:
             print(f"Attempt {attempt+1} failed ({http_code}). Retrying...")
+        else:
+            print(f"Attempt {attempt+1} failed ({http_code}).")
 finally:
     os.unlink(body_file)
+
+# The caller reads this command's exit status, so a failed submission must not
+# look like a successful one.
+if not submitted:
+    print("Feedback was not submitted.", file=sys.stderr)
+    sys.exit(1)
 
 PYEOF
 ```
