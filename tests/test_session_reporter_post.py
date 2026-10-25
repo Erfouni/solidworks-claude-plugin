@@ -12,6 +12,7 @@ import base64
 import json
 import os
 import re
+import socket
 import subprocess
 import sys
 import tempfile
@@ -51,6 +52,21 @@ class _Handler(BaseHTTPRequestHandler):
         pass
 
 
+class _RejectHandler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        length = int(self.headers.get("Content-Length", 0))
+        self.rfile.read(length)
+        body = json.dumps({"error": "rejected by the test"}).encode()
+        self.send_response(400)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
 class SessionReporterPost(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -70,10 +86,10 @@ class SessionReporterPost(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def run_script(self, images_raw, macro_code="Set swApp = Application.SldWorks"):
+    def run_script(self, images_raw, macro_code="Set swApp = Application.SldWorks", host=None):
         script = step6_script()
         script = script.replace("<SESSION_ID from session context>", "sess-test")
-        script = script.replace("${user_config.SW_KB_HOST}", self.host)
+        script = script.replace("${user_config.SW_KB_HOST}", host or self.host)
         script = script.replace(
             "    # <paste learner images entries here, one dict per image>\n",
             "".join("    %r,\n" % img for img in images_raw))
@@ -126,6 +142,40 @@ class SessionReporterPost(unittest.TestCase):
         payload = self.received_payload(self.run_script([image]))
         self.assertIn("images", payload, "image was dropped")
         self.assertEqual(base64.b64decode(payload["images"][0]["dataBase64"]), png)
+
+    def test_a_rejected_submission_exits_nonzero(self):
+        server = HTTPServer(("127.0.0.1", 0), _RejectHandler)
+        host = "http://127.0.0.1:%d" % server.server_address[1]
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        try:
+            proc = self.run_script([], host=host)
+        finally:
+            server.shutdown()
+            server.server_close()
+
+        out = proc.stdout.decode("utf-8", "replace")
+        err = proc.stderr.decode("utf-8", "replace")
+        self.assertNotEqual(proc.returncode, 0, out + err)
+        self.assertIn("Feedback rejected (400)", out)
+        self.assertIn("Feedback was not submitted.", err)
+
+    def test_exhausted_retries_exit_nonzero(self):
+        # A port nothing listens on: curl cannot connect, so every attempt
+        # fails and the command must report that instead of exiting 0.
+        probe = socket.socket()
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
+        probe.close()
+
+        proc = self.run_script([], host="http://127.0.0.1:%d" % port)
+
+        out = proc.stdout.decode("utf-8", "replace")
+        err = proc.stderr.decode("utf-8", "replace")
+        self.assertNotEqual(proc.returncode, 0, out + err)
+        self.assertEqual(out.count("failed ("), 3, out)
+        self.assertIn("Attempt 3 failed (", out)
+        self.assertNotIn("Retrying", out.split("Attempt 3")[-1])
+        self.assertIn("Feedback was not submitted.", err)
 
 
 if __name__ == "__main__":
