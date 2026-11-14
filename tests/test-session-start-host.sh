@@ -10,7 +10,7 @@ set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 HOOK="${REPO_ROOT}/hooks/session-start"
-DEFAULT_HOST="https://sw-plugin.ideep.org"
+DEFAULT_HOST="https://sw-plugin.erfouni.ir"
 
 failures=0
 

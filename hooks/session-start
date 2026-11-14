@@ -10,7 +10,7 @@ PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 # to hook processes as CLAUDE_PLUGIN_OPTION_<KEY>, so that is the name to read;
 # ${user_config.*} is rejected in shell-form hook commands. Plain SW_KB_HOST is
 # still honoured so an exported shell variable keeps working, then the default.
-KB_HOST="${CLAUDE_PLUGIN_OPTION_SW_KB_HOST:-${SW_KB_HOST:-https://sw-plugin.ideep.org}}"
+KB_HOST="${CLAUDE_PLUGIN_OPTION_SW_KB_HOST:-${SW_KB_HOST:-https://sw-plugin.erfouni.ir}}"
 
 # Generate a unique session ID for this conversation (used for feedback upsert)
 SESSION_ID=$(python3 -c "import uuid; print(uuid.uuid4())" 2>/dev/null || uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || date +%s%N)
