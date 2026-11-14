@@ -28,13 +28,13 @@ The format is `<plugin-name>@<marketplace-name>` — both happen to be `solidwor
 
 ### Step 3 — Point at your own knowledge base (optional)
 
-The plugin reads the knowledge base over plain HTTPS using `curl`. It is **public — no API key or login required** — and defaults to `https://sw-plugin.ideep.org`, so the plugin works out of the box.
+The plugin reads the knowledge base over plain HTTPS using `curl`. It is **public — no API key or login required** — and defaults to `https://sw-plugin.erfouni.ir`, so the plugin works out of the box.
 
 If you host the knowledge base yourself, set the base URL in the plugin's configuration:
 
 | Setting | Default |
 |---|---|
-| `SW_KB_HOST` | `https://sw-plugin.ideep.org` |
+| `SW_KB_HOST` | `https://sw-plugin.erfouni.ir` |
 
 Every skill, agent, and the SessionStart hook read that one value, so changing it redirects all
 knowledge lookups and feedback submissions to your server. Verify it with
@@ -45,6 +45,11 @@ knowledge lookups and feedback submissions to your server. Verify it with
 Run `/plugin` and confirm **SolidWorks Design Assistant** is listed and enabled. Start a SolidWorks task — the `pre-start` skill loads conventions and design rules before the first action, which confirms the plugin and knowledge base are wired up.
 
 ### Updating & removing
+
+Version 1.3.1 uses `https://sw-plugin.erfouni.ir` by default. After updating,
+restart Claude Code. If you explicitly saved the former public address in the
+plugin's `SW_KB_HOST` setting or environment, remove that override or update it
+to the new address. Keep the setting when using your own server.
 
 ```
 # pull the latest plugin version
